@@ -7,4 +7,5 @@ package antminer.rulediscover;
  */
 public interface DomainClass {
     public String getName();
+
 }

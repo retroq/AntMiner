@@ -2,6 +2,8 @@ package antminer.rulediscover;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -16,6 +18,8 @@ import java.util.List;
 public class ClassificationRuleImpl implements ClassificationRule {
     private List<Term> terms = new LinkedList<Term>();
     private DomainClass domainClass;
+
+    private static Logger log = LoggerFactory.getLogger(ClassificationRuleImpl.class);
 
     public ClassificationRuleImpl() {
 
@@ -48,6 +52,12 @@ public class ClassificationRuleImpl implements ClassificationRule {
                 TN = 0,       //true negative
                 FP = 0,       //false positive
                 FN = 0;       //false negative
+
+        //Если после выполнения setMostFrequentClass значение не установлено,
+        // значит правило не покрывает ни одного случая и его качество = 0
+        if (domainClass == null)
+            return 0;
+
         for (Domain domain : domains) {
             if (isCoveredByThisRule(domain)) {
                 if (domain.getDomainClass().equals(getRuleClass()))
@@ -55,9 +65,9 @@ public class ClassificationRuleImpl implements ClassificationRule {
                 else
                     FP += 1;
             } else if (domain.getDomainClass().equals(getRuleClass()))
-                TN += 1;
-            else
                 FN += 1;
+            else
+                TN += 1;
         }
 
         double quality = ((TP) / (double) (TP + FN)) * (TN / (double) (FP + TN));
@@ -87,7 +97,7 @@ public class ClassificationRuleImpl implements ClassificationRule {
             }
         }
         if (mostFrequentClass == null)
-             throw new IllegalArgumentException("No domain classes found");
+            log.warn("No classes covered by the rule");
         domainClass = mostFrequentClass;
         return mostFrequentClass;
     }

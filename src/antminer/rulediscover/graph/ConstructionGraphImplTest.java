@@ -3,6 +3,8 @@ package antminer.rulediscover.graph;
 import antminer.rulediscover.*;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -47,8 +49,14 @@ public class ConstructionGraphImplTest {
     @Test
     public void testGenerateRule(){
         ClassificationRule rule = graph.generateRule();
-        rule.setMostFrequentClass(fixture);
-        System.out.println(rule);
+        for (int i = 0; i < 100; i++) {
+            rule = graph.generateRule();
+            rule.setMostFrequentClass(fixture);
+            System.out.println(rule);
+            System.out.println(rule.getQuality(fixture));
+        }
+
+
     }
 
     private Domain getDomain(String [][]attributes, String domainClass){

@@ -4,6 +4,8 @@ import antminer.rulediscover.*;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -42,6 +44,8 @@ public class ConstructionGraphImpl implements ConstructionGraph{
         Степень учёта эвристик [0..1]
      */
     private double B = 1;
+
+    Logger log = LoggerFactory.getLogger(ConstructionGraphImpl.class);
 
     private static class ACVMultisetEntry {
         private DomainAttribute domainAttribute;
