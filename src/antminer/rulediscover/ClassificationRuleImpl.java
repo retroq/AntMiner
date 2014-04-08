@@ -42,6 +42,11 @@ public class ClassificationRuleImpl implements ClassificationRule {
     }
 
     @Override
+    public List<Term> getTerms() {
+        return terms;
+    }
+
+    @Override
     public void addTerm(Term term) {
         terms.add(term);
     }

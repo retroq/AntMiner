@@ -8,6 +8,7 @@ import java.util.List;
  * @author sipachev_ai
  */
 public interface Domain {
+    public void setDomainClass(DomainClass domainClass);
     public DomainClass getDomainClass();
     public List<DomainAttribute> getDomainAttributes();
     public DomainValue getDomainValue(DomainAttribute attribute);

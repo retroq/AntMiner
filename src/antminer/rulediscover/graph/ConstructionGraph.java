@@ -12,8 +12,8 @@ import java.util.List;
  * @author sipachev_ai
  */
 public interface ConstructionGraph {
-    public void init(List<DomainAttribute> attributes, Collection<Domain> domains);
+    public void init(Collection<Domain> domains);
     public ClassificationRule generateRule();
 
-    public void updateProbabilities(ClassificationRule rule);
+    public void updateProbabilities(ClassificationRule rule, double quality);
 }

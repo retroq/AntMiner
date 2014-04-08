@@ -1,6 +1,7 @@
 package antminer.rulediscover;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Date: 08.04.14
@@ -10,6 +11,9 @@ import java.util.Collection;
 public interface ClassificationRule {
     public boolean isCoveredByThisRule(Domain dataLine);
     public DomainClass getRuleClass();
+
+    public List<Term> getTerms();
+
     public void addTerm(Term term);
     /**
         Получить качество условия (правила) для данного набора данных domains

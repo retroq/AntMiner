@@ -35,4 +35,9 @@ public class SimpleDomain implements Domain{
     public DomainValue getDomainValue(DomainAttribute attribute) {
         return values.get(attribute);
     }
+
+    @Override
+    public void setDomainClass(DomainClass domainClass) {
+        this.domainClass = domainClass;
+    }
 }

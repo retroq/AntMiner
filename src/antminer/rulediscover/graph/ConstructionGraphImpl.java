@@ -45,6 +45,11 @@ public class ConstructionGraphImpl implements ConstructionGraph{
      */
     private double B = 1;
 
+    /*
+        Скорость испарения феромонов
+     */
+    private double evaporationFactor = 0.1;
+
     Logger log = LoggerFactory.getLogger(ConstructionGraphImpl.class);
 
     private static class ACVMultisetEntry {
@@ -111,14 +116,14 @@ public class ConstructionGraphImpl implements ConstructionGraph{
         }
     }
     @Override
-    public void init(List<DomainAttribute> attributes, Collection<Domain> domains) {
+    public void init(Collection<Domain> domains) {
 
         domainClasses = new HashSet<DomainClass>();
         attributesElements = new HashMap<DomainAttribute, Set<GraphElement>>();
         attributeValueHistogram = HashMultiset.create();
         attributeClassValueHistogram = HashMultiset.create();
 
-        for (DomainAttribute domainAttribute : attributes){
+        for (DomainAttribute domainAttribute : domains.iterator().next().getDomainAttributes()){
             attributesElements.put(domainAttribute, new HashSet<GraphElement>());
         }
 
@@ -232,7 +237,27 @@ public class ConstructionGraphImpl implements ConstructionGraph{
     }
 
     @Override
-    public void updateProbabilities(ClassificationRule rule) {
+    public void updateProbabilities(ClassificationRule rule, double quality) {
+        updatePheromones(rule, quality);
+        initProbabilities();
+    }
 
+    private void updatePheromones(ClassificationRule rule, double quality){
+
+        for (Term term : rule.getTerms()){
+            Collection<GraphElement> elements = attributesElements.get(term.getAttribute());
+            double pheromoneSum = 0d;
+            for (GraphElement element : elements){
+                if (element.getDomainValue().equals(term.getValue())){
+                    double currentPheromone = element.getPheromone();
+                    element.setPheromone((1 - evaporationFactor)*currentPheromone + (1. - 1./(1 + quality))*currentPheromone);
+                }
+                pheromoneSum += element.getPheromone();
+            }
+            for (GraphElement element : elements){
+                double pheromone = element.getPheromone();
+                element.setPheromone(pheromone/pheromoneSum);
+            }
+        }
     }
 }

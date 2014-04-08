@@ -1,23 +1,22 @@
-package antminer.rulediscover.graph;
+package antminer.rulediscover;
 
-import antminer.rulediscover.*;
+import antminer.rulediscover.graph.ConstructionGraph;
+import antminer.rulediscover.graph.ConstructionGraphImpl;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.*;
 /**
- * Date: 08.04.14
+ * Date: 09.04.14
+ * Time: 0:55
  *
- * @author sipachev_ai
+ * @author anton
  */
-public class ConstructionGraphImplTest {
+public class RuleMinerTest {
     List<Domain> fixture = new LinkedList<Domain>();
     List<DomainAttribute> attributes;
     ConstructionGraph graph;
@@ -40,32 +39,19 @@ public class ConstructionGraphImplTest {
         graph = new ConstructionGraphImpl();
         graph.init(fixture);
     }
-
-    @Test
-    public void testInit() throws Exception {
-         //todo implement
-    }
-
-    @Test
-    public void testGenerateRule(){
-        ClassificationRule rule = graph.generateRule();
-        for (int i = 0; i < 100; i++) {
-            rule = graph.generateRule();
-            rule.setMostFrequentClass(fixture);
-            System.out.println(rule);
-            System.out.println(rule.getQuality(fixture));
-        }
-
-
-    }
-
     private Domain getDomain(String [][]attributes, String domainClass){
         HashMap<DomainAttribute, DomainValue> map = new HashMap<DomainAttribute, DomainValue>();
 
         for (int i = 0; i < attributes.length; i++) {
             map.put(new SimpleDomainAttribute(attributes[i][0]), new SimpleStringDomainValue(attributes[i][1]));
         }
-         Domain domain = new SimpleDomain(new SimpleDomainClass(domainClass), map);
+        Domain domain = new SimpleDomain(new SimpleDomainClass(domainClass), map);
         return domain;
+    }
+    @Test
+    public void testExtractRule(){
+        RuleMiner ruleMiner = new RuleMinerImpl();
+        List<ClassificationRule> rules = ruleMiner.extractRules(fixture);
+        System.out.println(rules);
     }
 }
