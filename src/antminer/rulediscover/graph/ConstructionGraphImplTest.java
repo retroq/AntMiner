@@ -1,6 +1,7 @@
 package antminer.rulediscover.graph;
 
 import antminer.rulediscover.*;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -15,18 +16,39 @@ import static org.junit.Assert.*;
  * @author sipachev_ai
  */
 public class ConstructionGraphImplTest {
+    List<Domain> fixture = new LinkedList<Domain>();
+    List<DomainAttribute> attributes;
+    ConstructionGraph graph;
+
+
+    @Before
+    public void setUp(){
+        fixture.add(getDomain(new String[][]{{"Condition", "Excellent"},      {"Safety", "Bad"}},         "Buy"));
+        fixture.add(getDomain(new String[][]{{"Condition", "Very Good"},     {"Safety", "Very Good"}},   "Buy"));
+        fixture.add(getDomain(new String[][]{{"Condition", "Good"},          {"Safety", "Good"}},        "Buy"));
+        fixture.add(getDomain(new String[][]{{"Condition", "Good"},          {"Safety", "Very Good"}},   "Buy"));
+        fixture.add(getDomain(new String[][]{{"Condition", "Bad"},           {"Safety", "Very Good"}},   "Wait"));
+        fixture.add(getDomain(new String[][]{{"Condition", "Bad"},           {"Safety", "Very Good"}},   "Wait"));
+        fixture.add(getDomain(new String[][]{{"Condition", "Bad"},          {"Safety", "Good"}},        "Not Buy"));
+        fixture.add(getDomain(new String[][]{{"Condition", "Bad"},          {"Safety", "Bad"}},        "Not Buy"));
+        attributes = Arrays.<DomainAttribute>asList(
+                new SimpleDomainAttribute("Condition"),
+                new SimpleDomainAttribute("Safety")
+        );
+        graph = new ConstructionGraphImpl();
+        graph.init(attributes, fixture);
+    }
+
     @Test
     public void testInit() throws Exception {
-        ConstructionGraph graph = new ConstructionGraphImpl();
-        List<Domain> fixture = new LinkedList<Domain>();
-        fixture.add(getDomain(new String[][]{{"x", "1"}, {"y", "4"}}, "c1"));
-        fixture.add(getDomain(new String[][]{{"x", "1"}, {"y", "4"}}, "c1"));
-        fixture.add(getDomain(new String[][]{{"x", "2"}, {"y", "5"}}, "c1"));
-        fixture.add(getDomain(new String[][]{{"x", "3"}, {"y", "6"}}, "c2"));
-        fixture.add(getDomain(new String[][]{{"x", "4"}, {"y", "7"}}, "c2"));
-        List<DomainAttribute> attributes = Arrays.<DomainAttribute>asList(new SimpleDomainAttribute("x"), new SimpleDomainAttribute("y"));
-        graph.init(attributes, fixture);
-        graph.generateRule();
+         //todo implement
+    }
+
+    @Test
+    public void testGenerateRule(){
+        ClassificationRule rule = graph.generateRule();
+        rule.setMostFrequentClass(fixture);
+        System.out.println(rule);
     }
 
     private Domain getDomain(String [][]attributes, String domainClass){

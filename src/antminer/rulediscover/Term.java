@@ -8,4 +8,5 @@ package antminer.rulediscover;
 public interface Term {
     DomainAttribute getAttribute();
     DomainValue getValue();
+    boolean test(Domain domain);
 }

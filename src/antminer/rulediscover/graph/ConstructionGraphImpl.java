@@ -14,9 +14,11 @@ import java.util.*;
  */
 public class ConstructionGraphImpl implements ConstructionGraph{
     /*
-        Основные данные для построения правил Атрибут -> (значение, вероятность, эвристика, феромон)
+        Основные данные для построения правил:
+
+         Атрибут -> {(значение, вероятность, эвристика, феромон), ... }
      */
-    private HashMap<DomainAttribute, List<GraphElement>> attributesElements;
+    private HashMap<DomainAttribute, Set<GraphElement>> attributesElements;
 
     Set<DomainClass> domainClasses;
     /*
@@ -30,11 +32,6 @@ public class ConstructionGraphImpl implements ConstructionGraph{
         необходим для вычисления эвристик (в часности энтропии)
      */
     private Multiset<AVEntry> attributeValueHistogram;
-
-    /*
-        Значения энтропии для соответствующих пар (Аттрибут->Значение)
-     */
-    private HashMap<AVEntry, Double> entropies;
 
     /*
         Степень учёта феромона [0..1]
@@ -113,12 +110,12 @@ public class ConstructionGraphImpl implements ConstructionGraph{
     public void init(List<DomainAttribute> attributes, Collection<Domain> domains) {
 
         domainClasses = new HashSet<DomainClass>();
-        attributesElements = new HashMap<DomainAttribute, List<GraphElement>>();
+        attributesElements = new HashMap<DomainAttribute, Set<GraphElement>>();
         attributeValueHistogram = HashMultiset.create();
         attributeClassValueHistogram = HashMultiset.create();
 
         for (DomainAttribute domainAttribute : attributes){
-            attributesElements.put(domainAttribute, new LinkedList<GraphElement>());
+            attributesElements.put(domainAttribute, new HashSet<GraphElement>());
         }
 
         for (Domain domain : domains){
@@ -144,7 +141,7 @@ public class ConstructionGraphImpl implements ConstructionGraph{
 
     //todo test
     private void initHeuristics(){
-        entropies = new HashMap<AVEntry, Double>();
+        HashMap<AVEntry, Double> entropies = new HashMap<AVEntry, Double>();
         double log2m = Math.log(domainClasses.size())/Math.log(2);
         double heuristicDivider = 0;
 
@@ -184,7 +181,7 @@ public class ConstructionGraphImpl implements ConstructionGraph{
     }
     private void initPheromones(){
         for (DomainAttribute attribute : attributesElements.keySet()){
-            List<GraphElement> elements = attributesElements.get(attribute);
+            Collection<GraphElement> elements = attributesElements.get(attribute);
             for (GraphElement element : elements){
                 element.setPheromone(1./elements.size());
             }
@@ -192,7 +189,7 @@ public class ConstructionGraphImpl implements ConstructionGraph{
     }
     private void initProbabilities(){
         for (DomainAttribute attribute : attributesElements.keySet()){
-            List<GraphElement> elements = attributesElements.get(attribute);
+            Collection<GraphElement> elements = attributesElements.get(attribute);
             double probabilitySum = 0;
             for (GraphElement element : elements){
                 double heuristic = element.getHeuristic();
@@ -209,7 +206,25 @@ public class ConstructionGraphImpl implements ConstructionGraph{
 
     @Override
     public  ClassificationRule generateRule() {
-        return null;
+        ClassificationRule rule = new ClassificationRuleImpl();
+        for (DomainAttribute attribute : attributesElements.keySet()){
+            //todo find way to optimize : use list in attributesElements
+            List<GraphElement> graphElementList = new ArrayList<GraphElement>(attributesElements.get(attribute));
+            List<Double> densities = new ArrayList<Double>(graphElementList.size());
+            for (int i = 0; i < graphElementList.size(); i++) {
+                densities.add(0.);
+            }
+            densities.set(0, graphElementList.get(0).getProbability());
+            for (int i = 1; i < densities.size(); i++) {
+                densities.set(i, densities.get(i - 1) + graphElementList.get(i).getProbability());
+            }
+            int selectedValueIndex = 0;
+            double randomNumber = Math.random();
+            while (selectedValueIndex < densities.size() && randomNumber >= densities.get(selectedValueIndex))
+                selectedValueIndex++;
+            rule.addTerm(new SimpleTerm(attribute, graphElementList.get(selectedValueIndex).getDomainValue()));
+        }
+        return rule;
     }
 
     @Override

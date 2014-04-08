@@ -51,4 +51,21 @@ public class GraphElement {
     public void setHeuristic(double heuristic) {
         this.heuristic = heuristic;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        GraphElement that = (GraphElement) o;
+
+        if (domainValue != null ? !domainValue.equals(that.domainValue) : that.domainValue != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return domainValue != null ? domainValue.hashCode() : 0;
+    }
 }
