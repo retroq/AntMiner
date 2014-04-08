@@ -15,4 +15,5 @@ public interface ClassificationRule {
     public void prune(Collection<Domain> domains);
     //----------?????-------------
     public DomainClass getMostFrequentClass(Collection<Domain> domains);
+    public Collection<Domain> filterUncovered(Collection<Domain> domains);
 }
