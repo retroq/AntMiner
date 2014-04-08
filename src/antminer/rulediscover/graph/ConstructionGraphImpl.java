@@ -1,6 +1,7 @@
 package antminer.rulediscover.graph;
 
 import antminer.rulediscover.*;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 
@@ -11,7 +12,7 @@ import java.util.*;
  *
  * @author sipachev_ai
  */
-public class AbstractConstructionGraph implements ConstructionGraph{
+public class ConstructionGraphImpl implements ConstructionGraph{
     /*
         Основные данные для построения правил Атрибут -> (значение, вероятность, эвристика, феромон)
      */
@@ -34,6 +35,16 @@ public class AbstractConstructionGraph implements ConstructionGraph{
         Значения энтропии для соответствующих пар (Аттрибут->Значение)
      */
     private HashMap<AVEntry, Double> entropies;
+
+    /*
+        Степень учёта феромона [0..1]
+     */
+    private  double A = 1;
+
+    /*
+        Степень учёта эвристик [0..1]
+     */
+    private double B = 1;
 
     private static class ACVMultisetEntry {
         private DomainAttribute domainAttribute;
@@ -125,11 +136,17 @@ public class AbstractConstructionGraph implements ConstructionGraph{
             }
         }
 
+        initHeuristics();
+        initPheromones();
+        initProbabilities();
 
     }
 
-    private void initHeuristic(){
+    //todo test
+    private void initHeuristics(){
         entropies = new HashMap<AVEntry, Double>();
+        double log2m = Math.log(domainClasses.size())/Math.log(2);
+        double heuristicDivider = 0;
 
         for (DomainAttribute domainAttribute : attributesElements.keySet()){
             List<GraphElement> elements = new ArrayList<GraphElement>(attributesElements.get(domainAttribute));
@@ -138,18 +155,56 @@ public class AbstractConstructionGraph implements ConstructionGraph{
                 double lengthT = attributeValueHistogram.count(new AVEntry(domainAttribute, element.getDomainValue()));
                 double entropy = 0;
                 for (DomainClass domainClass : domainClasses){
-                    double freqT = attributeClassValueHistogram.count(new ACVMultisetEntry(domainAttribute, domainClass, element.getDomainValue()));
+                    double freqT = attributeClassValueHistogram.count(
+                            new ACVMultisetEntry(
+                                    domainAttribute,
+                                    domainClass,
+                                    element.getDomainValue()));
+                    if (freqT == 0)
+                        continue;
                     double tmp = freqT/lengthT;
                     entropy += tmp* (Math.log(tmp)/Math.log(2.));
                 }
                 entropy = -entropy;
                 entropies.put(new AVEntry(domainAttribute, element.getDomainValue()), entropy);
+                heuristicDivider += (log2m - entropy);
             }
         }
 
+        for (DomainAttribute domainAttribute : attributesElements.keySet()){
+            List<GraphElement> elements = new ArrayList<GraphElement>(attributesElements.get(domainAttribute));
+            for (int i = 0; i < elements.size(); i++) {
+                GraphElement element = elements.get(i);
+                double currentValueEntropy = entropies.get(new AVEntry(domainAttribute, element.getDomainValue()));
+                double heuristic = (log2m - currentValueEntropy)/heuristicDivider;
+                element.setHeuristic(heuristic);
+            }
+        }
 
-
-
+    }
+    private void initPheromones(){
+        for (DomainAttribute attribute : attributesElements.keySet()){
+            List<GraphElement> elements = attributesElements.get(attribute);
+            for (GraphElement element : elements){
+                element.setPheromone(1./elements.size());
+            }
+        }
+    }
+    private void initProbabilities(){
+        for (DomainAttribute attribute : attributesElements.keySet()){
+            List<GraphElement> elements = attributesElements.get(attribute);
+            double probabilitySum = 0;
+            for (GraphElement element : elements){
+                double heuristic = element.getHeuristic();
+                double pheromone = element.getPheromone();
+                double probability =  Math.pow(heuristic, A) * Math.pow(pheromone, B);
+                element.setProbability(probability);
+                probabilitySum += probability;
+            }
+            for (GraphElement element : elements){
+                element.setProbability(element.getProbability()/probabilitySum);
+            }
+        }
     }
 
     @Override
