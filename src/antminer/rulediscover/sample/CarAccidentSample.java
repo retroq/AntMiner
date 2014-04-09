@@ -27,7 +27,7 @@ public class CarAccidentSample {
     };
 
     public static void main(String[] args) {
-        Collection<Domain> domains = DomainsGenerator.generate(attributes, values, classes, 50);
+        Collection<Domain> domains = DomainsGenerator.generate(attributes, values, classes, 500);
         RuleMiner ruleMiner = new RuleMinerImpl();
         List<ClassificationRule> rules = ruleMiner.extractRules(domains);
         System.out.println(rules);

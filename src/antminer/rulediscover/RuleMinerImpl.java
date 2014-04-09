@@ -14,9 +14,9 @@ import java.util.List;
  * @author anton
  */
 public class RuleMinerImpl implements RuleMiner{
-    private int antsNumber = 4;
-    private int stepsNumber = 5;
-    private int maxUncoveredCases = 1;
+    private int antsNumber = 10;
+    private int stepsNumber = 10;
+    private int maxUncoveredCases = 30;
 
     @Override
     public List<ClassificationRule> extractRules(Collection<Domain> domains) {
@@ -39,10 +39,11 @@ public class RuleMinerImpl implements RuleMiner{
                     }
                 }
                 if (bestRule == null)
-                    continue;
+                    break;
                 graph.updateProbabilities(bestRule, Qbest);
             }
-
+            if (bestRule == null)
+                continue;
             rules.add(bestRule);
             domains = bestRule.filterUncovered(domains);
         }

@@ -101,8 +101,8 @@ public class ClassificationRuleImpl implements ClassificationRule {
                 mostFrequentClass = domainClass1;
             }
         }
-        if (mostFrequentClass == null)
-            log.warn("No classes covered by the rule");
+//        if (mostFrequentClass == null)
+//            log.warn("No classes covered by the rule");
         domainClass = mostFrequentClass;
         return mostFrequentClass;
     }
