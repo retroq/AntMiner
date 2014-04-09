@@ -38,8 +38,11 @@ public class RuleMinerImpl implements RuleMiner{
                         bestRule = rule;
                     }
                 }
+                if (bestRule == null)
+                    break;
                 graph.updateProbabilities(bestRule, Qbest);
             }
+
             rules.add(bestRule);
             domains = bestRule.filterUncovered(domains);
         }

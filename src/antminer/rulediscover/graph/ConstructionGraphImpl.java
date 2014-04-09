@@ -1,7 +1,6 @@
 package antminer.rulediscover.graph;
 
 import antminer.rulediscover.*;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import org.slf4j.Logger;
