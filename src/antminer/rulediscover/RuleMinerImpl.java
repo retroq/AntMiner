@@ -39,7 +39,7 @@ public class RuleMinerImpl implements RuleMiner{
                     }
                 }
                 if (bestRule == null)
-                    break;
+                    continue;
                 graph.updateProbabilities(bestRule, Qbest);
             }
 
