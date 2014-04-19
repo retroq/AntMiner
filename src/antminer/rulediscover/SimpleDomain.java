@@ -9,7 +9,7 @@ import java.util.List;
  *
  * @author sipachev_ai
  */
-public class SimpleDomain implements Domain{
+public class SimpleDomain implements Domain {
     private DomainClass domainClass;
     private HashMap<DomainAttribute, DomainValue> values;
 
@@ -39,5 +39,13 @@ public class SimpleDomain implements Domain{
     @Override
     public void setDomainClass(DomainClass domainClass) {
         this.domainClass = domainClass;
+    }
+
+    @Override
+    public String toString() {
+        return "SimpleDomain{" +
+                "domainClass=" + domainClass +
+                ", values=" + values +
+                '}';
     }
 }

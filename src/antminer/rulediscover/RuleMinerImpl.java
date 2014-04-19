@@ -13,17 +13,17 @@ import java.util.List;
  *
  * @author anton
  */
-public class RuleMinerImpl implements RuleMiner{
-    private int antsNumber = 10;
+public class RuleMinerImpl implements RuleMiner {
+    private int antsNumber = 20;
     private int stepsNumber = 10;
-    private int maxUncoveredCases = 30;
+    private int maxUncoveredCases = 50;
 
     @Override
     public List<ClassificationRule> extractRules(Collection<Domain> domains) {
         ConstructionGraph graph = new ConstructionGraphImpl();
         List<ClassificationRule> rules = new LinkedList<ClassificationRule>();
-
-        while (domains.size() > maxUncoveredCases){
+        int datasetTotalSize = domains.size();
+        while (domains.size() > maxUncoveredCases) {
             graph.init(domains);
             ClassificationRule bestRule = null;
             for (int i = 0; i < stepsNumber; i++) {
@@ -32,8 +32,8 @@ public class RuleMinerImpl implements RuleMiner{
                 for (int j = 0; j < antsNumber; j++) {
                     ClassificationRule rule = graph.generateRule();
                     rule.setMostFrequentClass(domains);
-                    double Qcurrent = rule.getQuality(domains);
-                    if (Qcurrent > Qbest){
+                    double Qcurrent = rule.getQuality(domains, datasetTotalSize);
+                    if (Qcurrent > Qbest) {
                         Qbest = Qcurrent;
                         bestRule = rule;
                     }
@@ -50,9 +50,9 @@ public class RuleMinerImpl implements RuleMiner{
         return rules;
     }
 
-    public static Collection<Domain> apply(List<ClassificationRule> rules, Collection<Domain> domains){
-        for (Domain domain : domains){
-            for (ClassificationRule rule:rules){
+    public static Collection<Domain> apply(List<ClassificationRule> rules, Collection<Domain> domains) {
+        for (Domain domain : domains) {
+            for (ClassificationRule rule : rules) {
                 if (rule.isCoveredByThisRule(domain))
                     domain.setDomainClass(rule.getRuleClass());
             }

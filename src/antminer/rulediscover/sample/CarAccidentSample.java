@@ -17,7 +17,7 @@ import java.util.List;
 public class CarAccidentSample {
     private static String[] attributes = {"Crashtest rate", "Seatbelts", "Airbag", "Speed", "Road separator", "Passengers"};
     private static String[] classes = {"No damage", "Light damage", "High damage", "Lethal"};
-    private static String [][] values = {
+    private static String[][] values = {
             {"*", "**", "***", "****", "*****"},
             {"Fastened", "Not fastened"},
             {"Presented", "Not presented"},
@@ -27,9 +27,14 @@ public class CarAccidentSample {
     };
 
     public static void main(String[] args) {
-        Collection<Domain> domains = DomainsGenerator.generate(attributes, values, classes, 500);
+
+        Collection<Domain> domains = DomainsGenerator.generate(attributes, values, classes, 15);
         RuleMiner ruleMiner = new RuleMinerImpl();
+        for (Domain domain : domains)
+            System.out.println(domain);
         List<ClassificationRule> rules = ruleMiner.extractRules(domains);
-        System.out.println(rules);
+        for (ClassificationRule rule : rules) {
+            System.out.println("Q = " + rule.getQuality(domains, domains.size()) + "; Cov = " + rule.getCoverage(domains) + "; Rule = " + rule);
+        }
     }
 }
