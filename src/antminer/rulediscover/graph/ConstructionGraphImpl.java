@@ -13,7 +13,7 @@ import java.util.*;
  *
  * @author sipachev_ai
  */
-public class ConstructionGraphImpl implements ConstructionGraph{
+public class ConstructionGraphImpl implements ConstructionGraph {
     /*
         Основные данные для построения правил:
 
@@ -22,6 +22,8 @@ public class ConstructionGraphImpl implements ConstructionGraph{
     private HashMap<DomainAttribute, Set<GraphElement>> attributesElements;
 
     Set<DomainClass> domainClasses;
+
+    private Collection<Domain> domainCollection;
     /*
         Мультимножество для подсчёта количества доменов с одинаковыми кортежами (аттрибут, значение, класс)
         необходим для вычисления эвристик (в часности энтропии)
@@ -37,7 +39,7 @@ public class ConstructionGraphImpl implements ConstructionGraph{
     /*
         Степень учёта феромона [0..1]
      */
-    private  double A = 1;
+    private double A = 1;
 
     /*
         Степень учёта эвристик [0..1]
@@ -48,6 +50,13 @@ public class ConstructionGraphImpl implements ConstructionGraph{
         Скорость испарения феромонов
      */
     private double evaporationFactor = 0.1;
+
+    private int min_coverage = 30;
+
+    private int max_coverage_fails = 15;
+
+    private Integer classesNumber = null;
+
 
     Logger log = LoggerFactory.getLogger(ConstructionGraphImpl.class);
 
@@ -114,6 +123,7 @@ public class ConstructionGraphImpl implements ConstructionGraph{
             return result;
         }
     }
+
     @Override
     public void init(Collection<Domain> domains) {
 
@@ -121,15 +131,16 @@ public class ConstructionGraphImpl implements ConstructionGraph{
         attributesElements = new HashMap<DomainAttribute, Set<GraphElement>>();
         attributeValueHistogram = HashMultiset.create();
         attributeClassValueHistogram = HashMultiset.create();
+        domainCollection = domains;
 
-        for (DomainAttribute domainAttribute : domains.iterator().next().getDomainAttributes()){
+        for (DomainAttribute domainAttribute : domains.iterator().next().getDomainAttributes()) {
             attributesElements.put(domainAttribute, new HashSet<GraphElement>());
         }
 
-        for (Domain domain : domains){
+        for (Domain domain : domains) {
             domainClasses.add(domain.getDomainClass());
 
-            for (DomainAttribute domainAttribute : domain.getDomainAttributes()){
+            for (DomainAttribute domainAttribute : domain.getDomainAttributes()) {
                 DomainValue value = domain.getDomainValue(domainAttribute);
                 attributesElements.get(domainAttribute).add(new GraphElement(value));
 
@@ -148,18 +159,20 @@ public class ConstructionGraphImpl implements ConstructionGraph{
     }
 
     //todo test
-    private void initHeuristics(){
+    private void initHeuristics() {
+        if (classesNumber == null)
+            classesNumber = domainClasses.size();
         HashMap<AVEntry, Double> entropies = new HashMap<AVEntry, Double>();
-        double log2m = Math.log(domainClasses.size())/Math.log(2);
+        double log2m = Math.log(classesNumber) / Math.log(2);
         double heuristicDivider = 0;
 
-        for (DomainAttribute domainAttribute : attributesElements.keySet()){
+        for (DomainAttribute domainAttribute : attributesElements.keySet()) {
             List<GraphElement> elements = new ArrayList<GraphElement>(attributesElements.get(domainAttribute));
             for (int i = 0; i < elements.size(); i++) {
                 GraphElement element = elements.get(i);
                 double lengthT = attributeValueHistogram.count(new AVEntry(domainAttribute, element.getDomainValue()));
                 double entropy = 0;
-                for (DomainClass domainClass : domainClasses){
+                for (DomainClass domainClass : domainClasses) {
                     double freqT = attributeClassValueHistogram.count(
                             new ACVMultisetEntry(
                                     domainAttribute,
@@ -167,8 +180,8 @@ public class ConstructionGraphImpl implements ConstructionGraph{
                                     element.getDomainValue()));
                     if (freqT == 0)
                         continue;
-                    double tmp = freqT/lengthT;
-                    entropy += tmp* (Math.log(tmp)/Math.log(2.));
+                    double tmp = freqT / lengthT;
+                    entropy += tmp * (Math.log(tmp) / Math.log(2.));
                 }
                 entropy = -entropy;
                 entropies.put(new AVEntry(domainAttribute, element.getDomainValue()), entropy);
@@ -176,46 +189,56 @@ public class ConstructionGraphImpl implements ConstructionGraph{
             }
         }
 
-        for (DomainAttribute domainAttribute : attributesElements.keySet()){
+        for (DomainAttribute domainAttribute : attributesElements.keySet()) {
             List<GraphElement> elements = new ArrayList<GraphElement>(attributesElements.get(domainAttribute));
             for (int i = 0; i < elements.size(); i++) {
                 GraphElement element = elements.get(i);
                 double currentValueEntropy = entropies.get(new AVEntry(domainAttribute, element.getDomainValue()));
-                double heuristic = (log2m - currentValueEntropy)/heuristicDivider;
+                double heuristic = (log2m - currentValueEntropy) / heuristicDivider;
+                if (Double.isNaN(heuristic))
+                    log.error("NaN heuristic detected");
                 element.setHeuristic(heuristic);
             }
         }
 
     }
-    private void initPheromones(){
-        for (DomainAttribute attribute : attributesElements.keySet()){
+
+    private void initPheromones() {
+        for (DomainAttribute attribute : attributesElements.keySet()) {
             Collection<GraphElement> elements = attributesElements.get(attribute);
-            for (GraphElement element : elements){
-                element.setPheromone(1./elements.size());
+            for (GraphElement element : elements) {
+                element.setPheromone(1. / elements.size());
             }
         }
     }
-    private void initProbabilities(){
-        for (DomainAttribute attribute : attributesElements.keySet()){
+
+    private void initProbabilities() {
+        for (DomainAttribute attribute : attributesElements.keySet()) {
             Collection<GraphElement> elements = attributesElements.get(attribute);
             double probabilitySum = 0;
-            for (GraphElement element : elements){
+            for (GraphElement element : elements) {
                 double heuristic = element.getHeuristic();
                 double pheromone = element.getPheromone();
-                double probability =  Math.pow(heuristic, A) * Math.pow(pheromone, B);
+                double probability = Math.pow(heuristic, A) * Math.pow(pheromone, B);
                 element.setProbability(probability);
                 probabilitySum += probability;
             }
-            for (GraphElement element : elements){
-                element.setProbability(element.getProbability()/probabilitySum);
+            for (GraphElement element : elements) {
+                element.setProbability(element.getProbability() / probabilitySum);
             }
         }
     }
 
     @Override
-    public  ClassificationRule generateRule() {
+    public ClassificationRule generateRule() {
         ClassificationRule rule = new ClassificationRuleImpl();
-        for (DomainAttribute attribute : attributesElements.keySet()){
+        int coverageFails = 0;
+        final int attributesNumber = attributesElements.keySet().size();
+        final List<DomainAttribute> attributes = new LinkedList<DomainAttribute>(attributesElements.keySet());
+
+        //while(rule.getTerms().size() <  attributesNumber && coverageFails <= max_coverage_fails){
+        //    DomainAttribute attribute = attributes.get((int)Math.round(Math.random()*(attributes.size() - 1)));
+        for (DomainAttribute attribute : attributesElements.keySet()) {
             //todo find way to optimize : use list in attributesElements
             List<GraphElement> graphElementList = new ArrayList<GraphElement>(attributesElements.get(attribute));
             List<Double> densities = new ArrayList<Double>(graphElementList.size());
@@ -230,7 +253,16 @@ public class ConstructionGraphImpl implements ConstructionGraph{
             double randomNumber = Math.random();
             while (selectedValueIndex < densities.size() && randomNumber >= densities.get(selectedValueIndex))
                 selectedValueIndex++;
-            rule.addTerm(new SimpleTerm(attribute, graphElementList.get(selectedValueIndex).getDomainValue()));
+            Term term = new SimpleTerm(attribute, graphElementList.get(selectedValueIndex).getDomainValue());
+            if (rule.getTerms().contains(term))
+                continue;
+            rule.addTerm(term);
+            if (rule.getCoverage(domainCollection) < min_coverage) {
+                rule.getTerms().remove(term);
+                coverageFails++;
+                continue;
+            }
+            attributes.remove(attribute);
         }
         return rule;
     }
@@ -241,21 +273,21 @@ public class ConstructionGraphImpl implements ConstructionGraph{
         initProbabilities();
     }
 
-    private void updatePheromones(ClassificationRule rule, double quality){
+    private void updatePheromones(ClassificationRule rule, double quality) {
 
-        for (Term term : rule.getTerms()){
+        for (Term term : rule.getTerms()) {
             Collection<GraphElement> elements = attributesElements.get(term.getAttribute());
             double pheromoneSum = 0d;
-            for (GraphElement element : elements){
-                if (element.getDomainValue().equals(term.getValue())){
+            for (GraphElement element : elements) {
+                if (element.getDomainValue().equals(term.getValue())) {
                     double currentPheromone = element.getPheromone();
-                    element.setPheromone((1 - evaporationFactor)*currentPheromone + (1. - 1./(1 + quality))*currentPheromone);
+                    element.setPheromone((1 - evaporationFactor) * currentPheromone + (1. - 1. / (1 + quality)) * currentPheromone);
                 }
                 pheromoneSum += element.getPheromone();
             }
-            for (GraphElement element : elements){
+            for (GraphElement element : elements) {
                 double pheromone = element.getPheromone();
-                element.setPheromone(pheromone/pheromoneSum);
+                element.setPheromone(pheromone / pheromoneSum);
             }
         }
     }

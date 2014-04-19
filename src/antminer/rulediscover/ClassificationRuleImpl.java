@@ -52,7 +52,7 @@ public class ClassificationRuleImpl implements ClassificationRule {
     }
 
     @Override
-    public double getQuality(Collection<Domain> domains) {
+    public double getQuality(Collection<Domain> domains, int initialSize) {
         int TP = 0,           //true positive
                 TN = 0,       //true negative
                 FP = 0,       //false positive
@@ -74,10 +74,21 @@ public class ClassificationRuleImpl implements ClassificationRule {
             else
                 TN += 1;
         }
+        double covered = TP + FP;
 
-        double quality = ((TP) / (double) (TP + FN)) * (TN / (double) (FP + TN));
-
+        //double quality = ((TP) / (double) (TP + FN)) * (TN / (double) (FP + TN));
+        double quality = (TP) / covered + TP / initialSize;
         return quality;
+    }
+
+    @Override
+    public int getCoverage(Collection<Domain> domains) {
+        int covered = 0;
+        for (Domain domain : domains) {
+            if (isCoveredByThisRule(domain))
+                covered++;
+        }
+        return covered;
     }
 
     @Override
@@ -88,15 +99,15 @@ public class ClassificationRuleImpl implements ClassificationRule {
     @Override
     public DomainClass setMostFrequentClass(Collection<Domain> domains) {
         Multiset<DomainClass> classes = HashMultiset.create();
-        for (Domain domain : domains){
+        for (Domain domain : domains) {
             if (isCoveredByThisRule(domain))
                 classes.add(domain.getDomainClass());
         }
         int maxCount = -1;
         DomainClass mostFrequentClass = null;
-        for (DomainClass domainClass1 : classes){
+        for (DomainClass domainClass1 : classes) {
             int count = classes.count(domainClass1);
-            if (count > maxCount){
+            if (count > maxCount) {
                 maxCount = count;
                 mostFrequentClass = domainClass1;
             }
@@ -109,8 +120,8 @@ public class ClassificationRuleImpl implements ClassificationRule {
 
     @Override
     public Collection<Domain> filterUncovered(Collection<Domain> domains) {
-         List<Domain> filteredDomainList = new LinkedList<Domain>();
-        for (Domain domain : domains){
+        List<Domain> filteredDomainList = new LinkedList<Domain>();
+        for (Domain domain : domains) {
             if (!isCoveredByThisRule(domain))
                 filteredDomainList.add(domain);
         }
