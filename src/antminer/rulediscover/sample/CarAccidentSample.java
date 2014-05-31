@@ -32,9 +32,9 @@ public class CarAccidentSample {
         RuleMiner ruleMiner = new RuleMinerImpl();
         for (Domain domain : domains)
             System.out.println(domain);
-        List<ClassificationRule> rules = ruleMiner.extractRules(domains);
-        for (ClassificationRule rule : rules) {
-            System.out.println("Q = " + rule.getQuality(domains, domains.size()) + "; Cov = " + rule.getCoverage(domains) + "; Rule = " + rule);
-        }
+//        List<ClassificationRule> rules = ruleMiner.extractRules(domains);
+//        for (ClassificationRule rule : rules) {
+//            System.out.println("Q = " + rule.getQuality(domains, domains.size()) + "; Cov = " + rule.getCoverage(domains) + "; Rule = " + rule);
+//        }
     }
 }

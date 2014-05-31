@@ -9,6 +9,6 @@ import java.util.List;
  * @author sipachev_ai
  */
 public interface RuleMiner {
-    public List<ClassificationRule> extractRules(Collection<Domain> domains);
+    public ClassificationRule extractRules(Collection<Domain> domains);
 
 }

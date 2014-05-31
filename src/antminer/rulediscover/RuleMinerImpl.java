@@ -18,9 +18,27 @@ public class RuleMinerImpl implements RuleMiner {
     private int stepsNumber = 10;
     private int maxUncoveredCases = 50;
 
+    private double a = 1.0;
+    private double b = 1.0;
+    private int minCoverage = 2;
+    private double evaporationFactor = 0.1;
+
+    public RuleMinerImpl() {
+    }
+
+    public RuleMinerImpl(int antsNumber, int stepsNumber, int maxUncoveredCases, double a, double b, int minCoverage, double evaporationFactor) {
+        this.antsNumber = antsNumber;
+        this.stepsNumber = stepsNumber;
+        this.maxUncoveredCases = maxUncoveredCases;
+        this.a = a;
+        this.b = b;
+        this.minCoverage = minCoverage;
+        this.evaporationFactor = evaporationFactor;
+    }
+
     @Override
-    public List<ClassificationRule> extractRules(Collection<Domain> domains) {
-        ConstructionGraph graph = new ConstructionGraphImpl();
+    public ClassificationRule extractRules(Collection<Domain> domains) {
+        ConstructionGraph graph = new ConstructionGraphImpl(a,b,evaporationFactor,minCoverage);
         List<ClassificationRule> rules = new LinkedList<ClassificationRule>();
         int datasetTotalSize = domains.size();
         while (domains.size() > maxUncoveredCases) {
@@ -47,7 +65,7 @@ public class RuleMinerImpl implements RuleMiner {
             rules.add(bestRule);
             domains = bestRule.filterUncovered(domains);
         }
-        return rules;
+        return new RuleComposite(rules);
     }
 
     public static Collection<Domain> apply(List<ClassificationRule> rules, Collection<Domain> domains) {

@@ -6,10 +6,8 @@ import antminer.rulediscover.util.DataLoader;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Date: 09.04.14
@@ -54,20 +52,56 @@ public class RuleMinerTest {
     @Test
     public void testExtractRule() {
         RuleMiner ruleMiner = new RuleMinerImpl();
-        List<ClassificationRule> rules = ruleMiner.extractRules(fixture);
+        ClassificationRule rules = ruleMiner.extractRules(fixture);
         System.out.println(rules);
     }
 
     @Test
     public void test() throws Exception {
-        RuleMiner ruleMiner = new RuleMinerImpl();
+        RuleMiner ruleMiner = new RuleMinerImpl(10,20,10,1d,1d,35,0.1);
         List<Domain> domains = DataLoader.getInstance().loadDataFromArff("/home/anton/IdeaProjects/AntMiner/AntMiner/src/antminer/rulediscover/util/testData.arff");
+//        final List<Domain> domains = domainsAll.stream()
+//                .filter(domain ->
+//                        domain.getDomainClass().equals(new SimpleDomainClass("unacc")))
+//                .collect(Collectors.<Domain>toList());
 
-        for (Domain domain : domains)
-            System.out.println(domain);
-        List<ClassificationRule> rules = ruleMiner.extractRules(domains);
-        for (ClassificationRule rule : rules) {
-            System.out.println("Q = " + rule.getQuality(domains, domains.size()) + "; Cov = " + rule.getCoverage(domains) + "; Rule = " + rule);
+        Collections.shuffle(domains);
+
+
+        int trainingSetSize = domains.size()*9/10;
+        List<Domain> trainingSet = domains.subList(0, trainingSetSize);
+
+
+        final List<Domain> testSet = domains.subList(trainingSetSize, domains.size() - 1);
+
+
+        ClassificationRule rules = ruleMiner.extractRules(trainingSet);
+
+
+        int covered = 0;
+        int correct = 0;
+        int incorrect = 0;
+        int uncovered = 0;
+        for (Domain domain : testSet){
+            if (rules.isCoveredByThisRule(domain)){
+                covered++;
+                if (rules.getRuleClass().equals(domain.getDomainClass()))
+                    correct++;
+                else
+                    incorrect++;
+            }
+            else uncovered++;
         }
+
+        final int rulesSize = ((RuleComposite) rules).getRules().size();
+        System.out.println("rulesSize = " + rulesSize);
+
+        System.out.println("covered = " + covered);
+        System.out.println("uncovered = " + uncovered);
+        System.out.println("correct = " + correct);
+        System.out.println("incorrect = " + incorrect);
+        System.out.println("coverage = " + covered/(double)testSet.size());
+        System.out.println("accuracy = " + correct/(double)covered);
+
     }
 }

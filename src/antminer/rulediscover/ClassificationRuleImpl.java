@@ -77,7 +77,7 @@ public class ClassificationRuleImpl implements ClassificationRule {
         double covered = TP + FP;
 
         //double quality = ((TP) / (double) (TP + FN)) * (TN / (double) (FP + TN));
-        double quality = (TP) / covered + TP / initialSize;
+        double quality = (TP) / covered * (TP + TN) / (covered + FN);
         return quality;
     }
 

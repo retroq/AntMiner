@@ -53,7 +53,15 @@ public class ConstructionGraphImpl implements ConstructionGraph {
 
     private int min_coverage = 30;
 
-    private int max_coverage_fails = 15;
+    public ConstructionGraphImpl() {
+    }
+
+    public ConstructionGraphImpl(double a, double b, double evaporationFactor, int min_coverage) {
+        A = a;
+        B = b;
+        this.evaporationFactor = evaporationFactor;
+        this.min_coverage = min_coverage;
+    }
 
     private Integer classesNumber = null;
 
@@ -195,8 +203,9 @@ public class ConstructionGraphImpl implements ConstructionGraph {
                 GraphElement element = elements.get(i);
                 double currentValueEntropy = entropies.get(new AVEntry(domainAttribute, element.getDomainValue()));
                 double heuristic = (log2m - currentValueEntropy) / heuristicDivider;
-                if (Double.isNaN(heuristic))
+                if (Double.isNaN(heuristic)){
                     log.error("NaN heuristic detected");
+                }
                 element.setHeuristic(heuristic);
             }
         }
